@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+#EXE
+
+EXE=`basename $0`
+PKG="$EXE-cli"
+
+[ -L $0 ] && pushd `readlink $0 | xargs dirname` > /dev/null \
+    || pushd `dirname $0` > /dev/null
+export MPATH=`pwd -P`
+popd > /dev/null
+
+
+confirm () {
+    read -r -p "${1:-Are you sure? [y/N]} " response
+    case $response in
+        [yY][eE][sS]|[yY])
+            true
+            ;;
+        *)
+            false
+            ;;
+    esac
+}
+
+
+uninstall(){
+    confirm "Do you want to uninstall $PKG? [y/n]: " \
+        && sudo rm -rf ${MPATH} 2>/dev/null \
+        && sudo rm -f "/usr/local/bin/$EXE" 2>/dev/null \
+        && echo "Done !"
+}
+
+
+usage(){
+
+    cat <<__EOF__
+    
+    vju tools product by Nexhome    
+
+usage:  $EXE [OPTIONS] COMMAND [--help]
+
+    OPTIONS
+        --uninstall     uninstall $PKG
+
+    COMMANDS:
+        help
+__EOF__
+
+    for i in ${MPATH}/commands/*; do
+        [ ! -L "$i" -a -f "$i"  ] && echo "        ${i##*/}"
+    done
+
+    [ "${COMMAND}" == "help" ] && exit 0 || exit 1
+}
+
+
+case $1 in
+    --uninstall)
+        uninstall && exit 0
+        ;;
+esac
+
+
+COMMAND=$1; shift;
+
+[ ! -f ${MPATH}/commands/${COMMAND} ] && usage
+${MPATH}/commands/${COMMAND} "$@"
