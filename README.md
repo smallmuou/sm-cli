@@ -14,5 +14,5 @@ sudo ./install.sh
 ## 使用
 
 ```
-sm help
+sm -h
 ```

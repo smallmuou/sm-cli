@@ -79,7 +79,7 @@ shift $(($OPTIND - 1))
 
 spushd `current_dir`
 
-EXE=`/bin/ls -l|sed '1d'|sed '/^d/d'|awk '{print $NF}'|xargs grep -l "EXECUTE-FILE"`
+EXE=`/bin/ls -l|sed '1d'|sed '/install.sh/d'|sed '/^d/d'|awk '{print $NF}'|xargs grep -l "EXECUTE-FILE"|sed '2,$d'`
 PKG="$EXE-cli"
 INSTALL_DIR="${INSTALL_DIR}"
 

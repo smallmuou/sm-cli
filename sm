@@ -31,37 +31,55 @@ uninstall(){
 }
 
 
+COMMANDS_PATH=${MPATH}/commands
 usage(){
 
     cat <<__EOF__
-    
-    vju tools product by Nexhome    
-
 usage:  $EXE [OPTIONS] COMMAND [--help]
-
-    OPTIONS
-        --uninstall     uninstall $PKG
+    
+    OPTIONS:
+        -h show this help message and exit 
+        -u uninstall $PKG 
 
     COMMANDS:
-        help
 __EOF__
 
-    for i in ${MPATH}/commands/*; do
-        [ ! -L "$i" -a -f "$i"  ] && echo "        ${i##*/}"
-    done
+    traverse_commands ${COMMANDS_PATH}
 
-    [ "${COMMAND}" == "help" ] && exit 0 || exit 1
+    exit 1
 }
 
+traverse_commands() {
+    if [ -d $1 ];then
+        for i in $1/*; do
+            traverse_commands $i
+        done
+    else
+        [ ! -L "$i" -a -f "$i"  ] && echo "       `echo -n ${i/$COMMANDS_PATH/}|sed 's/\// /g'`"
+    fi
+}
+
+# traverse basepath command
+traverse() {
+    BASEPATH=$1; shift;
+    COMMAND=${BASEPATH}/$1; shift;
+
+    [ ! -e ${COMMAND} ] && usage
+    if [ -d ${COMMAND} ];then
+        [ $# -eq 0 ] && usage
+        traverse ${COMMAND} "$@"
+    else 
+        ${COMMAND} "$@"
+    fi
+}
 
 case $1 in
-    --uninstall)
+    -h)
+        usage && exit 0
+        ;;
+    -u)
         uninstall && exit 0
         ;;
 esac
 
-
-COMMAND=$1; shift;
-
-[ ! -f ${MPATH}/commands/${COMMAND} ] && usage
-${MPATH}/commands/${COMMAND} "$@"
+traverse $COMMANDS_PATH "$@"
