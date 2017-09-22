@@ -23,11 +23,11 @@
 set -e
 
 spushd() {
-     pushd "$1" 2>&1 > /dev/null
+     pushd "$1" 2>&1> /dev/null
 }
 
 spopd() {
-     popd 2>&1 > /dev/null
+     popd 2>&1> /dev/null
 }
 
 info() {
@@ -36,25 +36,44 @@ info() {
      echo -e "[${green}INFO${normal}] $1"
 }
 
+cmdcheck() {
+    command -v $1>/dev/null 2>&1 || { error >&2 "Please install command $1 first."; exit 1; }   
+}
+
 error() {
      local red="\033[1;31m"
      local normal="\033[0m"
      echo -e "[${red}ERROR${normal}] $1"
 }
 
-# 获取当前目录
-current_dir() {
+curdir() {
     if [ ${0:0:1} = '/' ] || [ ${0:0:1} = '~' ]; then
         echo "$(dirname $0)"
+    elif [ -L $0 ];then
+        name=`readlink $0`
+        echo $(dirname $name)
     else
         echo "`pwd`/$(dirname $0)"
     fi
 }
 
+
+#########################################
+###           GROBLE DEFINE           ###
+#########################################
+
+VERSION=1.0.0
+AUTHOR=smallmuou
+
+#########################################
+###             ARG PARSER            ###
+#########################################
+
 usage() {
 cat << EOF
+`basename $0` version $VERSION by $AUTHOR
 
-USAGE: $0 [-h]
+USAGE: `basename $0` [OPTIONS]
 
 DESCRIPTION:
 
@@ -62,22 +81,27 @@ OPTIONS:
     -h                Show this help message and exit
 
 EOF
+exit 1
 }
 
 while getopts 'h' arg; do
     case $arg in
         h)
             usage
-            exit;;
+            ;;
         ?)
             usage
-            exit;;
+            ;;
     esac
 done
 
 shift $(($OPTIND - 1))
 
-spushd `current_dir`
+#########################################
+###            MAIN ENTRY             ###
+#########################################
+
+spushd `curdir`
 
 EXE=`/bin/ls -l|sed '1d'|sed '/install.sh/d'|sed '/^d/d'|awk '{print $NF}'|xargs grep -l "EXECUTE-FILE"|sed '2,$d'`
 PKG="$EXE-cli"
@@ -87,6 +111,7 @@ install(){
     [ ! -d "${INSTALL_DIR}" ] && mkdir -p ${INSTALL_DIR}
     rm -rf ${INSTALL_DIR}/*
     cp -rf * ${INSTALL_DIR}
+    [ ! -f "/etc/sm.conf" ] && cp -rf conf/sm.conf.sample /etc/sm.conf
     chmod -R 755 ${INSTALL_DIR}/commands 2>/dev/null
     chmod 755 ${INSTALL_DIR}/$EXE 2>/dev/null
     sudo ln -sf ${INSTALL_DIR}/$EXE /usr/local/bin/$EXE
