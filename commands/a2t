@@ -57,6 +57,10 @@ curdir() {
     fi
 }
 
+myos() {
+    echo `uname|tr "[:upper:]" "[:lower:]"`
+}
+
 
 #########################################
 ###           GROBLE DEFINE           ###
@@ -119,7 +123,12 @@ pcmfile=$1
 
 access_token=`curl -s "https://openapi.baidu.com/oauth/2.0/token?grant_type=client_credentials&client_id=$BAIDU_YUYIN_API_KEY&client_secret=$BAIDU_YUYIN_SECRET_KEY"|jshon -e access_token|sed 's/"//g'`
 size=`/bin/ls -l $pcmfile|awk '{print $5}'`
-base64data=`base64 $pcmfile`
+
+if [ myos == 'linux' ];then
+    base64data=`base64 -w $pcmfile`
+else
+    base64data=`base64 $pcmfile`
+fi
 
 body="{
     \"format\":\"pcm\",
